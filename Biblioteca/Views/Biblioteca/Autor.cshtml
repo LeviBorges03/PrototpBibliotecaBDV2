@@ -1,0 +1,283 @@
+@{
+    ViewData["Title"] = "Perfil do Autor";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/biblioteca.css" />
+    <style>
+        /* Estilos baseados no Autor.css original (sem gradientes ou complexidades extras) */
+        .biblioteca-header-local {
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .biblioteca-header-local h2 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-top: 10px;
+        }
+
+        .voltar-link {
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .voltar-link:hover { 
+            color: var(--primary);
+        }
+
+        /* --- SEÇÃO DO AUTOR HERO (Simples) --- */
+        .autor-hero {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 40px;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .autor-foto-grande {
+            width: 200px;
+            height: 200px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid var(--white);
+            box-shadow: var(--shadow);
+        }
+
+        /* Sem Emoji: Ocultar o ícone porque o usuário quer apenas a cor de fundo */
+        .emoji-autor { 
+            display: none; 
+        }
+
+        .autor-essencial h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .autor-tagline {
+            font-size: 1.1rem;
+            color: var(--accent);
+            margin: 5px 0 25px 0;
+            font-style: italic;
+        }
+
+        .autor-metadados {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .meta-dado {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rotulo {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            letter-spacing: 1px;
+        }
+
+        .valor {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Obras Secao parecida com biblioteca.css grid expandido */
+        .obras-secao {
+            margin-top: 20px;
+        }
+
+        .obras-secao h3 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Reuso e extensão do layout flexível dos livros-grid */
+        .livros-grid-autor {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        /* Tornando os cards links clicáveis como no Livro */
+        .livro-card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Responsividade */
+        @@media (max-width: 900px) {
+            .livros-grid-autor { grid-template-columns: repeat(3, 1fr); }
+        }
+        @@media (max-width: 768px) {
+            .autor-hero { grid-template-columns: 1fr; text-align: center; justify-items: center; }
+            .autor-metadados { justify-content: center; }
+        }
+        @@media (max-width: 650px) {
+            .livros-grid-autor { grid-template-columns: repeat(2, 1fr); }
+        }
+        @@media (max-width: 450px) {
+            .livros-grid-autor { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+<div class="page-wrapper">
+    <header class="biblioteca-header-local">
+        <!-- Rota de volta para o Catálogo -->
+        <a href="@Url.Action("Index", "Biblioteca")" class="voltar-link">
+            ← Voltar para a Biblioteca
+        </a>
+        <h2>Perfil do Autor</h2>
+    </header>
+
+    <main class="perfil-container">
+        <section class="autor-hero">
+            <!-- A cor do background desta div será alterada pelo JS para ficar idêntica à cor da capa -->
+            <div class="autor-foto-grande" id="autorFotoColorida">
+                <i class="emoji-autor" id="autorEmoji">✍️</i>
+            </div>
+            <div class="autor-essencial">
+                <h1 id="autorNome">Carregando Autor...</h1>
+                <p class="autor-tagline" id="autorTagline">Conheça mais sobre as incríveis obras deste mestre da literatura.</p>
+                
+                <div class="autor-metadados">
+                    <div class="meta-dado">
+                        <span class="rotulo">Nascimento:</span>
+                        <span class="valor" id="autorNascimento">Histórico</span>
+                    </div>
+                    <div class="meta-dado">
+                        <span class="rotulo">Naturalidade:</span>
+                        <span class="valor" id="autorLocal">Planeta Terra</span>
+                    </div>
+                    <div class="meta-dado">
+                        <span class="rotulo">Gêneros:</span>
+                        <span class="valor" id="autorGeneros">Ficção, Clássico</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reuso da info-secao da biblioteca.css original -->
+        <section class="info-secao">
+            <div class="info-box">
+                <h3>Sobre o Autor</h3>
+                <p id="autorBio">Esta é uma página gerada dinamicamente pelo sistema. O autor selecionado é um dos mais proeminentes nomes catalogados na nossa Biblioteca. Suas obras abordam narrativas que cativam e perduram através dos tempos. A vida e trajetória desse escritor(a) continuam sendo motivo de profunda inspiração e pesquisa nas universidades e academias de todo o mundo.</p>
+            </div>
+
+            <div class="info-extras">
+                <div class="extra-item">
+                    <i class="icon">📚</i>
+                    <span><strong id="autorQtdObras">Múltiplas Obras</strong> clássicas publicadas</span>
+                </div>
+                <div class="extra-item">
+                    <i class="icon">🏆</i>
+                    <span><strong>Membro Imortal</strong> nas Academias Literárias</span>
+                </div>
+                <div class="extra-item">
+                    <i class="icon">🌐</i>
+                    <span><strong>Traduções</strong> em dezenas de idiomas</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="obras-secao" id="secaoObras" style="display:none;">
+            <h3>Outras Obras Relacionadas no Catálogo</h3>
+            
+            <div class="livros-grid-autor" id="autorGridLivros">
+                <!-- Javascript irá preencher o grid com livros dinâmicos -->
+            </div>
+        </section>
+    </main>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dataStr = localStorage.getItem('autorAtual');
+            
+            if (dataStr) {
+                // Tenta parsear JSON se for um objeto com a cor associada {nome: "autor", cor: "#123"}
+                let nomeAutor = "";
+                let corCapa = "#e0e0e0"; // fallback
+
+                try {
+                    const parsedData = JSON.parse(dataStr);
+                    if(parsedData.nome) {
+                        nomeAutor = parsedData.nome;
+                        corCapa = parsedData.cor || corCapa;
+                    } else {
+                        nomeAutor = dataStr;
+                    }
+                } catch(e) {
+                    // Antiga compatibilidade onde autorAtual era só uma string "Machado de Assis"
+                    nomeAutor = dataStr;
+                }
+
+                // Aplica Nome e Cor (Removendo os degradês e emojis)
+                document.getElementById('autorNome').innerText = nomeAutor;
+                document.getElementById('autorFotoColorida').style.backgroundColor = corCapa;
+                
+                // Mock Simples: gerar 3 "obras relacionadas" falsas só para visualmente simular a passagem de dados
+                const container = document.getElementById('autorGridLivros');
+                const coresFalsas = ['#3498db', '#e74c3c', '#f1c40f', '#9b59b6'];
+                
+                let mockObras = "";
+                for(let i = 1; i <= 3; i++) {
+                    const randomColor = coresFalsas[i % coresFalsas.length];
+                    const tituloFalso = `Obra Clássica Vol ${i}`;
+                    const generoFalso = "Drama";
+
+                    // Como estamos simulando a navegação encadeada, colocamos o mesmo script 'abrirLivro' da Index aqui!
+                    mockObras += `
+                    <div class="livro-card">
+                        <a href="javascript:void(0);" onclick="abrirLivroParaSimulacao('${tituloFalso}', '${nomeAutor}', '${randomColor}', '${generoFalso}')" class="livro-card-link" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; flex-grow: 1;">
+                            <div class="livro-capa-placeholder" style="background-color: ${randomColor};">
+                                <span class="genero-tag">${generoFalso}</span>
+                            </div>
+                            <div class="livro-info">
+                                <h4>${tituloFalso}</h4>
+                                <p>${nomeAutor}</p>
+                            </div>
+                        </a>
+                    </div>
+                    `;
+                }
+
+                container.innerHTML = mockObras;
+                document.getElementById('secaoObras').style.display = 'block';
+
+            } else {
+                document.getElementById('autorNome').innerText = "Autor Não Especificado";
+            }
+        });
+
+        // Função local caso o usuário queira abrir o livro pela tela do Autor
+        function abrirLivroParaSimulacao(titulo, autor, corCapa, genero) {
+            const livroData = { titulo, autor, corCapa, genero, ano: 'Desconhecido', paginas: '300' };
+            localStorage.setItem('livroAtual', JSON.stringify(livroData));
+            window.location.href = '@Url.Action("Livro", "Biblioteca")';
+        }
+    </script>
+}

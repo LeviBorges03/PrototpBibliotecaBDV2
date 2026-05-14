@@ -1,0 +1,388 @@
+@model List<Biblioteca.Models.Livro>
+
+@{
+    ViewData["Title"] = "Catálogo da Biblioteca";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/biblioteca.css" />
+    <style>
+        .autor-link-hover {
+            transition: color 0.2s;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        .autor-link-hover:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+        
+        /* Coração de Favoritos */
+        .fav-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.2s;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .fav-icon:hover {
+            transform: scale(1.2);
+            color: #fff;
+        }
+        .fav-icon.active {
+            color: #e74c3c;
+        }
+
+        /* Container de Busca Animado */
+        .search-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .search-container.show {
+            max-height: 80px;
+            opacity: 1;
+            margin-bottom: 20px;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            width: 60%;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border-radius: 30px;
+            border: 2px solid #e0e0e0;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+        }
+
+        .search-icon-left {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #95a5a6;
+            font-size: 1.1rem;
+        }
+
+        .filter-fav-btn {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            color: #7f8c8d;
+            border-radius: 30px;
+            padding: 0 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-fav-btn:hover, .filter-fav-btn.active {
+            border-color: #e74c3c;
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.05);
+        }
+
+        /* Mensagem de Erro/NotFound com estilo */
+        .not-found-msg {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            grid-column: 1 / -1; /* Ocupa todas as colunas no grid */
+            text-align: center;
+            margin: 20px 0;
+            animation: fadeIn 0.4s ease;
+        }
+        .not-found-msg i {
+            font-size: 3rem;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+        .not-found-msg h4 {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .not-found-msg p {
+            color: #7f8c8d;
+        }
+        
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+}
+
+<div class="page-wrapper">
+    
+    <section class="biblioteca-header">
+        <h2>Catálogo de Clássicos</h2>
+    </section>
+
+    <div class="carousel-container">
+        @* Botão Esquerdo *@
+        <button class="nav-btn left" onclick="scrollGrid(-1)"><i class="bi bi-chevron-left"></i></button>
+
+        @* Grade de Livros com rolagem horizontal *@
+        <div class="livros-grid" id="livrosGrid">
+            
+            <div class="not-found-msg" id="notFoundMsg">
+                <i class="bi bi-journal-x"></i>
+                <h4>Puxa, não encontramos.</h4>
+                <p>Ainda não possuímos esse exemplar em nossa coleção.</p>
+            </div>
+
+            @foreach (var item in Model)
+            {
+                <div class="livro-card" data-titulo="@item.Titulo.ToLower()" data-autor="@item.Autor.ToLower()">
+                    <div style="position: relative;">
+                        <!-- Ícone de Favorito independente do card link -->
+                        <i class="bi bi-heart-fill fav-icon" onclick="toggleFav(event, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Titulo))', this)" title="Favoritar"></i>
+                        
+                        <a href="javascript:void(0);" onclick="abrirLivro('@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Titulo))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor))', '@item.CorCapa', '@item.Genero', '@item.DataPublicacao.Year', '@item.NumPaginas')" class="livro-card-link" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
+                            <div class="livro-capa-placeholder" style="background-color: @item.CorCapa;">
+                                <span class="genero-tag">@item.Genero</span>
+                            </div>
+                            <div class="livro-info">
+                                <h4>@item.Titulo</h4>
+                                <div onclick="abrirAutor(event, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor))', '@item.CorCapa')">
+                                    <p class="autor-link-hover"><i class="bi bi-pen" style="font-size: 0.8rem; margin-right:4px;"></i> @item.Autor</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* Botão Direito *@
+        <button class="nav-btn right" onclick="scrollGrid(1)"><i class="bi bi-chevron-right"></i></button>
+    </div>
+
+    @* Botão elegante para expandir o catálogo *@
+    <div class="expand-container" style="flex-direction: column; align-items: center;">
+        <button class="expand-btn" id="expandBtn" onclick="toggleExpand()" aria-label="Expandir catálogo" aria-expanded="false">
+            <span id="expandBtnText">Ver todo o catálogo</span>
+            <span id="expandBtnIcon" class="expand-icon"><i class="bi bi-chevron-down"></i></span>
+        </button>
+
+        <!-- Barra de Busca (Oculta até clicar em Ver todo o catálogo) -->
+        <div class="search-container" id="searchContainer">
+            <div class="search-input-wrapper">
+                <i class="bi bi-search search-icon-left"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por título ou autor..." onkeyup="filtrarLivros()" />
+            </div>
+            <button class="filter-fav-btn" id="filterFavBtn" onclick="toggleFavFilter()" title="Ver apenas favoritos">
+                <i class="bi bi-heart-fill"></i> <span class="d-none d-sm-inline">Meus Favoritos</span>
+            </button>
+        </div>
+    </div>
+
+    <section class="info-secao mt-4">
+        <div class="info-box">
+            <h3>Sobre a Nossa Biblioteca</h3>
+            <p>Bem-vindo ao nosso acervo digital! Aqui você encontra uma seleção curada de obras para expandir seus horizontes. Nosso objetivo é facilitar o acesso à leitura de forma organizada, interativa e totalmente responsiva.</p>
+        </div>
+
+        <div class="info-extras">
+            <div class="extra-item">
+                <i class="icon bi bi-journal-richtext" style="color: var(--accent);"></i>
+                <span><strong>Total de Obras:</strong> @Model.Count títulos</span>
+            </div>
+            <div class="extra-item">
+                <i class="icon bi bi-lightbulb" style="color: #f1c40f;"></i>
+                <span><strong>Dica:</strong> Explore todos os livros para buscar títulos ou filtrar seus favoritos.</span>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        let showingFavsOnly = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarFavoritosUI();
+        });
+
+        function scrollGrid(direction) {
+            const grid = document.getElementById('livrosGrid');
+            grid.scrollBy({ left: direction * 300, behavior: 'smooth' });
+        }
+
+        function toggleExpand() {
+            const grid = document.getElementById('livrosGrid');
+            const btn = document.getElementById('expandBtn');
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const btnIcon = document.getElementById('expandBtnIcon');
+            const searchContainer = document.getElementById('searchContainer');
+
+            grid.classList.toggle('expandido');
+            btnIcon.classList.toggle('rodado');
+
+            navBtns.forEach(navBtn => navBtn.classList.toggle('escondido'));
+
+            const btnText = document.getElementById('expandBtnText');
+            if (grid.classList.contains('expandido')) {
+                btn.setAttribute('aria-expanded', 'true');
+                btnText.innerText = "Recolher catálogo";
+                // Mostra a barra de busca suavemente
+                searchContainer.classList.add('show');
+                document.getElementById('searchInput').focus();
+            } else {
+                btn.setAttribute('aria-expanded', 'false');
+                btnText.innerText = "Ver todo o catálogo";
+                // Esconde a barra de busca
+                searchContainer.classList.remove('show');
+                // Limpa busca ao recolher
+                document.getElementById('searchInput').value = "";
+                if(showingFavsOnly) toggleFavFilter(); // Reseta filtro de fav se recolher
+                filtrarLivros();
+            }
+        }
+
+        // --- SISTEMA DE FAVORITOS (LocalStorage) --- //
+        function getFavs() {
+            const favs = localStorage.getItem('meusFavoritos');
+            return favs ? JSON.parse(favs) : [];
+        }
+
+        function saveFavs(favsList) {
+            localStorage.setItem('meusFavoritos', JSON.stringify(favsList));
+        }
+
+        function toggleFav(event, titulo, iconElement) {
+            event.stopPropagation(); // Não abre a página do livro
+            
+            let favs = getFavs();
+            const index = favs.indexOf(titulo);
+            
+            if (index === -1) {
+                // Adiciona
+                favs.push(titulo);
+                iconElement.classList.add('active');
+            } else {
+                // Remove
+                favs.splice(index, 1);
+                iconElement.classList.remove('active');
+            }
+            
+            saveFavs(favs);
+
+            // Se o filtro de favoritos estiver ativo, refiltramos a tela em tempo real
+            if (showingFavsOnly) {
+                filtrarLivros();
+            }
+        }
+
+        function carregarFavoritosUI() {
+            const favs = getFavs();
+            const icons = document.querySelectorAll('.fav-icon');
+            
+            icons.forEach(icon => {
+                // O titulo esta no evento onclick passado por parametro, mas podemos pegar do card parente
+                const card = icon.closest('.livro-card');
+                const tituloCard = card.getAttribute('data-titulo'); // está em lower case
+                
+                // Checa case insensitive
+                const isFav = favs.some(f => f.toLowerCase() === tituloCard);
+                if(isFav) {
+                    icon.classList.add('active');
+                }
+            });
+        }
+
+        function toggleFavFilter() {
+            showingFavsOnly = !showingFavsOnly;
+            const btn = document.getElementById('filterFavBtn');
+            
+            if(showingFavsOnly) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+            
+            filtrarLivros();
+        }
+
+        // --- SISTEMA DE BUSCA --- //
+        function filtrarLivros() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.livro-card');
+            const notFoundMsg = document.getElementById('notFoundMsg');
+            const favs = getFavs();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const titulo = card.getAttribute('data-titulo');
+                const autor = card.getAttribute('data-autor');
+                
+                // Lógica de texto
+                const matchesText = titulo.includes(query) || autor.includes(query);
+                
+                // Lógica de favoritos
+                const isFav = favs.some(f => f.toLowerCase() === titulo);
+                const matchesFav = showingFavsOnly ? isFav : true;
+
+                if (matchesText && matchesFav) {
+                    card.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Se não encontrou nada na grid atual (excluindo a msg de not found)
+            if (visibleCount === 0 && cards.length > 0) {
+                notFoundMsg.style.display = 'flex';
+            } else {
+                notFoundMsg.style.display = 'none';
+            }
+        }
+
+        // --- SPA: Redirecionamento e Passagem de Parâmetros --- //
+        function abrirLivro(titulo, autor, corCapa, genero, ano, paginas) {
+            const livroData = { titulo, autor, corCapa, genero, ano, paginas };
+            localStorage.setItem('livroAtual', JSON.stringify(livroData));
+            window.location.href = '@Url.Action("Livro", "Biblioteca")';
+        }
+
+        function abrirAutor(event, nomeAutor, corCapa) {
+            event.stopPropagation();
+            event.preventDefault();
+            // Salva nome e a cor baseada na ultima obra dele pro avatar!
+            const autorData = { nome: nomeAutor, cor: corCapa };
+            localStorage.setItem('autorAtual', JSON.stringify(autorData));
+            
+            window.location.href = '@Url.Action("Autor", "Biblioteca")';
+        }
+    </script>
+}
