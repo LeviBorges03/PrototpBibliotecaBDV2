@@ -162,18 +162,17 @@
 
             @foreach (var item in Model)
             {
-                <div class="livro-card" data-titulo="@item.Titulo.ToLower()" data-autor="@item.Autor.ToLower()">
+                <div class="livro-card" data-titulo="@item.Titulo.ToLower()" data-autor="@item.Autor?.Nome?.ToLower()">
                     <div style="position: relative;">
-                        <!-- Ícone de Favorito independente do card link -->
-                        <i class="bi bi-heart-fill fav-icon" onclick="toggleFav(event, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Titulo))', this)" title="Favoritar"></i>
                         
-                        <a href="javascript:void(0);" onclick="abrirLivro('@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Titulo))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor))', '@item.CorCapa', '@item.Genero', '@item.DataPublicacao.Year', '@item.NumPaginas')" class="livro-card-link" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
+
+                        <a href="javascript:void(0);" onclick="abrirLivro('@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Titulo))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor?.Nome ?? ""))', '@item.CorCapa', '@item.Genero', '@item.DataPublicacao.Year', '@item.NumPaginas')" class="livro-card-link" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
                             <div class="livro-capa-placeholder" style="background-color: @item.CorCapa;">
                                 <span class="genero-tag">@item.Genero</span>
                             </div>
                             <div class="livro-info">
                                 <h4>@item.Titulo</h4>
-                                <div onclick="abrirAutor(event, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor))', '@item.CorCapa')">
+                                <div onclick="abrirAutor(event, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(item.Autor?.Nome ?? ""))', '@item.CorCapa')">
                                     <p class="autor-link-hover"><i class="bi bi-pen" style="font-size: 0.8rem; margin-right:4px;"></i> @item.Autor</p>
                                 </div>
                             </div>
@@ -187,24 +186,7 @@
         <button class="nav-btn right" onclick="scrollGrid(1)"><i class="bi bi-chevron-right"></i></button>
     </div>
 
-    @* Botão elegante para expandir o catálogo *@
-    <div class="expand-container" style="flex-direction: column; align-items: center;">
-        <button class="expand-btn" id="expandBtn" onclick="toggleExpand()" aria-label="Expandir catálogo" aria-expanded="false">
-            <span id="expandBtnText">Ver todo o catálogo</span>
-            <span id="expandBtnIcon" class="expand-icon"><i class="bi bi-chevron-down"></i></span>
-        </button>
 
-        <!-- Barra de Busca (Oculta até clicar em Ver todo o catálogo) -->
-        <div class="search-container" id="searchContainer">
-            <div class="search-input-wrapper">
-                <i class="bi bi-search search-icon-left"></i>
-                <input type="text" class="search-input" id="searchInput" placeholder="Pesquisar por título ou autor..." onkeyup="filtrarLivros()" />
-            </div>
-            <button class="filter-fav-btn" id="filterFavBtn" onclick="toggleFavFilter()" title="Ver apenas favoritos">
-                <i class="bi bi-heart-fill"></i> <span class="d-none d-sm-inline">Meus Favoritos</span>
-            </button>
-        </div>
-    </div>
 
     <section class="info-secao mt-4">
         <div class="info-box">
@@ -227,146 +209,15 @@
 
 @section Scripts {
     <script>
-        let showingFavsOnly = false;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            carregarFavoritosUI();
-        });
+
+
 
         function scrollGrid(direction) {
             const grid = document.getElementById('livrosGrid');
             grid.scrollBy({ left: direction * 300, behavior: 'smooth' });
         }
 
-        function toggleExpand() {
-            const grid = document.getElementById('livrosGrid');
-            const btn = document.getElementById('expandBtn');
-            const navBtns = document.querySelectorAll('.nav-btn');
-            const btnIcon = document.getElementById('expandBtnIcon');
-            const searchContainer = document.getElementById('searchContainer');
-
-            grid.classList.toggle('expandido');
-            btnIcon.classList.toggle('rodado');
-
-            navBtns.forEach(navBtn => navBtn.classList.toggle('escondido'));
-
-            const btnText = document.getElementById('expandBtnText');
-            if (grid.classList.contains('expandido')) {
-                btn.setAttribute('aria-expanded', 'true');
-                btnText.innerText = "Recolher catálogo";
-                // Mostra a barra de busca suavemente
-                searchContainer.classList.add('show');
-                document.getElementById('searchInput').focus();
-            } else {
-                btn.setAttribute('aria-expanded', 'false');
-                btnText.innerText = "Ver todo o catálogo";
-                // Esconde a barra de busca
-                searchContainer.classList.remove('show');
-                // Limpa busca ao recolher
-                document.getElementById('searchInput').value = "";
-                if(showingFavsOnly) toggleFavFilter(); // Reseta filtro de fav se recolher
-                filtrarLivros();
-            }
-        }
-
-        // --- SISTEMA DE FAVORITOS (LocalStorage) --- //
-        function getFavs() {
-            const favs = localStorage.getItem('meusFavoritos');
-            return favs ? JSON.parse(favs) : [];
-        }
-
-        function saveFavs(favsList) {
-            localStorage.setItem('meusFavoritos', JSON.stringify(favsList));
-        }
-
-        function toggleFav(event, titulo, iconElement) {
-            event.stopPropagation(); // Não abre a página do livro
-            
-            let favs = getFavs();
-            const index = favs.indexOf(titulo);
-            
-            if (index === -1) {
-                // Adiciona
-                favs.push(titulo);
-                iconElement.classList.add('active');
-            } else {
-                // Remove
-                favs.splice(index, 1);
-                iconElement.classList.remove('active');
-            }
-            
-            saveFavs(favs);
-
-            // Se o filtro de favoritos estiver ativo, refiltramos a tela em tempo real
-            if (showingFavsOnly) {
-                filtrarLivros();
-            }
-        }
-
-        function carregarFavoritosUI() {
-            const favs = getFavs();
-            const icons = document.querySelectorAll('.fav-icon');
-            
-            icons.forEach(icon => {
-                // O titulo esta no evento onclick passado por parametro, mas podemos pegar do card parente
-                const card = icon.closest('.livro-card');
-                const tituloCard = card.getAttribute('data-titulo'); // está em lower case
-                
-                // Checa case insensitive
-                const isFav = favs.some(f => f.toLowerCase() === tituloCard);
-                if(isFav) {
-                    icon.classList.add('active');
-                }
-            });
-        }
-
-        function toggleFavFilter() {
-            showingFavsOnly = !showingFavsOnly;
-            const btn = document.getElementById('filterFavBtn');
-            
-            if(showingFavsOnly) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-            
-            filtrarLivros();
-        }
-
-        // --- SISTEMA DE BUSCA --- //
-        function filtrarLivros() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const cards = document.querySelectorAll('.livro-card');
-            const notFoundMsg = document.getElementById('notFoundMsg');
-            const favs = getFavs();
-            let visibleCount = 0;
-
-            cards.forEach(card => {
-                const titulo = card.getAttribute('data-titulo');
-                const autor = card.getAttribute('data-autor');
-                
-                // Lógica de texto
-                const matchesText = titulo.includes(query) || autor.includes(query);
-                
-                // Lógica de favoritos
-                const isFav = favs.some(f => f.toLowerCase() === titulo);
-                const matchesFav = showingFavsOnly ? isFav : true;
-
-                if (matchesText && matchesFav) {
-                    card.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Se não encontrou nada na grid atual (excluindo a msg de not found)
-            if (visibleCount === 0 && cards.length > 0) {
-                notFoundMsg.style.display = 'flex';
-            } else {
-                notFoundMsg.style.display = 'none';
-            }
-        }
 
         // --- SPA: Redirecionamento e Passagem de Parâmetros --- //
         function abrirLivro(titulo, autor, corCapa, genero, ano, paginas) {
