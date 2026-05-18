@@ -7,21 +7,26 @@ namespace Biblioteca.Controllers;
 public class BibliotecaController : Controller
 {
     readonly ILivroRepository _livroRepository;
+    readonly IAutorRepository _autorRepository;
 
-    public BibliotecaController(ILivroRepository livroRepository)
+    public BibliotecaController(ILivroRepository livroRepository, IAutorRepository autorRepository)
     {
         _livroRepository = livroRepository;
+        _autorRepository = autorRepository;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        var dbLivros = await _livroRepository.BuscarTodosLivros();
+
+        // Simulating the static books the CodigoRef has
         List<Livro> l1 = new List<Livro>()
         {
             new Livro
             {
                 Titulo = "Harry Potter",
                 NumPaginas = 150,
-                Autor = new Autor { Nome = "Fulano" },
+                Autor = "Fulano",
                 Genero = "Ficção Científica",
                 DataPublicacao = DateOnly.MaxValue,
                 CorCapa = "#1A5276"
@@ -30,12 +35,17 @@ public class BibliotecaController : Controller
             {
                 Titulo = "Alíce no País das Maravilhas",
                 NumPaginas = 500,
-                Autor = new Autor { Nome = "Fulana" },
+                Autor = "Fulana",
                 Genero = "Fantasia",
                 DataPublicacao = DateOnly.MinValue,
                 CorCapa = "#9B59B6"
             }
         };
+
+        if (dbLivros != null && dbLivros.Any())
+        {
+            l1.AddRange(dbLivros);
+        }
 
         return View(l1);
     }
@@ -50,6 +60,7 @@ public class BibliotecaController : Controller
         return View();
     }
 
+    [HttpGet]
     public IActionResult CriarLivro()
     {
         return View();
@@ -58,7 +69,28 @@ public class BibliotecaController : Controller
     [HttpPost]
     public async Task<IActionResult> CriarLivro(Livro livro)
     {
-        await _livroRepository.CriarLivroAsync(livro);
-        return RedirectToAction("CriarLivro");
+        if (ModelState.IsValid)
+        {
+            await _livroRepository.CriarLivroAsync(livro);
+            return RedirectToAction("Index");
+        }
+        return View(livro);
+    }
+
+    [HttpGet]
+    public IActionResult CriarAutor()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult CriarAutor(Autor autor)
+    {
+        if (ModelState.IsValid)
+        {
+            _autorRepository.Add(autor);
+            return RedirectToAction("Index");
+        }
+        return View(autor);
     }
 }
