@@ -1,3 +1,4 @@
 node_modules/
-Biblioteca/obj/
-Biblioteca/bin/
+
+obj/
+bin/
