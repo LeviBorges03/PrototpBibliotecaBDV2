@@ -157,18 +157,18 @@ public class BibliotecaController : Controller
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
 
-                // model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
             }
             else
             {
                 model.Nome = nome;
-                model.Bibliografia = "Biografia não disponível no momento.";
+                model.Biografia = "Biografia não disponível no momento.";
 
                 var dbLivros = await _livroRepository.BuscarTodosLivros();
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
 
-                // model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
             }
         }
         return View(model);
