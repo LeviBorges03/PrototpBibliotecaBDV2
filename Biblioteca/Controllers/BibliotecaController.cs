@@ -102,43 +102,35 @@ public class BibliotecaController : Controller
             new Livro { Titulo = "A Peste", Autor = "Albert Camus", Genero = "Filosofia", NumPaginas = 308, DataPublicacao = new DateOnly(1947, 1, 1), CorCapa = "#922B21" }};
     }
 
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var dbLivros = await _livroRepository.BuscarTodosLivros();
-        
-        var combinedLivros = GetLivrosDefault();
-        if (dbLivros != null && dbLivros.Any())
-        {
-            combinedLivros.AddRange(dbLivros);
-        }
-
-        var livrosOrdenados = combinedLivros.OrderByDescending(l => l.DataPublicacao).ToList();
+        var livrosOrdenados = GetLivrosDefault().OrderByDescending(l => l.DataPublicacao).ToList();
         return View(livrosOrdenados);
     }
 
     public async Task<IActionResult> Livro(string titulo)
     {
         Livro model = new Livro();
-        
+
         if (!string.IsNullOrEmpty(titulo))
         {
             var dbLivros = await _livroRepository.BuscarTodosLivros();
             var dbMatch = dbLivros?.FirstOrDefault(l => l.Titulo != null && l.Titulo.Equals(titulo, StringComparison.OrdinalIgnoreCase));
-            
-            if (dbMatch != null) 
+
+            if (dbMatch != null)
             {
                 model = dbMatch;
-            } 
-            else 
+            }
+            else
             {
                 var localMatch = GetLivrosDefault().FirstOrDefault(l => l.Titulo != null && l.Titulo.Equals(titulo, StringComparison.OrdinalIgnoreCase));
-                if (localMatch != null) 
+                if (localMatch != null)
                 {
                     model = localMatch;
                 }
             }
         }
-        
+
         return View(model);
     }
 
@@ -149,26 +141,26 @@ public class BibliotecaController : Controller
         {
             var dbAutores = _autorRepository.GetAll();
             var dbMatch = dbAutores?.FirstOrDefault(a => a.Nome != null && a.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
-            
+
             if (dbMatch != null)
             {
                 model = dbMatch;
                 var dbLivros = await _livroRepository.BuscarTodosLivros();
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
-                
-                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
             }
-            else 
+            else
             {
                 model.Nome = nome;
-                model.Biografia = "Biografia não disponível no momento.";
-                
+                model.Bibliografia = "Bibliografia não disponível no momento.";
+
                 var dbLivros = await _livroRepository.BuscarTodosLivros();
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
-                
-                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
             }
         }
         return View(model);
@@ -178,7 +170,7 @@ public class BibliotecaController : Controller
     {
         return View();
     }
-   
+
     [HttpGet]
     public IActionResult CriarAutor()
     {
