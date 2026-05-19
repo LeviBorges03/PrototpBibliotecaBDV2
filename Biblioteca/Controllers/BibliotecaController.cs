@@ -102,17 +102,9 @@ public class BibliotecaController : Controller
             new Livro { Titulo = "A Peste", Autor = "Albert Camus", Genero = "Filosofia", NumPaginas = 308, DataPublicacao = new DateOnly(1947, 1, 1), CorCapa = "#922B21" }};
     }
 
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        var dbLivros = await _livroRepository.BuscarTodosLivros();
-
-        var combinedLivros = GetLivrosDefault();
-        if (dbLivros != null && dbLivros.Any())
-        {
-            combinedLivros.AddRange(dbLivros);
-        }
-
-        var livrosOrdenados = combinedLivros.OrderByDescending(l => l.DataPublicacao).ToList();
+        var livrosOrdenados = GetLivrosDefault().OrderByDescending(l => l.DataPublicacao).ToList();
         return View(livrosOrdenados);
     }
 
@@ -157,18 +149,18 @@ public class BibliotecaController : Controller
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
 
-                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+
             }
             else
             {
                 model.Nome = nome;
-                model.Biografia = "Biografia não disponível no momento.";
+                model.Bibliografia = "Bibliografia não disponível no momento.";
 
                 var dbLivros = await _livroRepository.BuscarTodosLivros();
                 var combinedLivros = GetLivrosDefault();
                 if (dbLivros != null && dbLivros.Any()) combinedLivros.AddRange(dbLivros);
 
-                model.Livros = combinedLivros.Where(l => l.Autor != null && l.Autor.Equals(nome, StringComparison.OrdinalIgnoreCase)).ToList();
+
             }
         }
         return View(model);
